@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace Quartz.NET.Demo
 {
@@ -15,10 +14,10 @@ namespace Quartz.NET.Demo
     {
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-        public void ConfigureServices(IServiceCollection services, IConfiguration Configuration)
+        public void ConfigureServices(IServiceCollection services)
         {
             // base configuration from appsettings.json
-            services.Configure<QuartzOptions>(Configuration.GetSection("Quartz"));
+            //services.Configure<QuartzOptions>(Configuration.GetSection("Quartz"));
 
             services.AddQuartz(q =>
             {
@@ -34,8 +33,6 @@ namespace Quartz.NET.Demo
                 {
                     tp.MaxConcurrency = 10;
                 });
-
-                // base quartz scheduler, job and trigger configuration
             });
 
             // ASP.NET Core hosting
@@ -44,6 +41,8 @@ namespace Quartz.NET.Demo
                 // when shutting down we want jobs to complete gracefully
                 options.WaitForJobsToComplete = true;
             });
+
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -58,10 +57,14 @@ namespace Quartz.NET.Demo
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Hello World!");
-                });
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Demo}/{action=Index}/{id?}"
+                );
+                ///endpoints.MapGet("/", async context =>
+                //{
+                //    await context.Response.WriteAsync("Hello World!");
+                //});
             });
         }
     }
