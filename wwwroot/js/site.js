@@ -14,7 +14,7 @@ $(function(){
         multiple_time_hours: true,
         multiple_time_minutes: true,
         default_period: 'week',
-        default_value: '*/14 */2 */3 * *',
+        //default_value: '*/14 */2 */3 * *'.substr(2).replace(/\?/g,"*"),
         bind_to: $('.example7-input'),
         bind_method: {
             set: function($element, value) {

@@ -27,6 +27,7 @@ namespace Quartz.NET.Demo.Controllers
             Console.Out.WriteLine("/Demo/Index");
 
             var scheduler = await GetScheduler();
+            await DeleteExistingJob(scheduler);
             var jobKey = await ScheduleSimpleTrigger(scheduler);
             await RescheduleSimpleTrigger(scheduler, jobKey);
             await RescheduleCronTrigger(scheduler, jobKey);
@@ -39,6 +40,15 @@ namespace Quartz.NET.Demo.Controllers
             await scheduler.Start();
 
             return scheduler;
+        }
+
+        public async Task DeleteExistingJob(IScheduler scheduler) {
+            var jobKey = new JobKey("myJob", "group1");
+
+            if (await scheduler.CheckExists(jobKey)) {
+                System.Console.WriteLine($"Deleting job {jobKey.Name}");
+                await scheduler.DeleteJob(jobKey);
+            }
         }
 
         public async Task<JobKey> ScheduleSimpleTrigger(IScheduler scheduler) {

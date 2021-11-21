@@ -221,33 +221,47 @@ var jqCronDefaultSettings = {
 			settings.disabled = false;
 		};
 
+		// https://gitlab.com/arnapou/jqcron/-/issues/4
 		// get cron value
 		this.getCron = function(){
 			var period = _selectorPeriod.getValue();
-			var items = ['*', '*', '*', '*', '*'];
+		
+			// Add 0 as the first item in the array and increment the array index by 1 when setting the value in the below code
+			// Added ? where ever applicable in the cron expression to support quartz scheduler
+		
+			var items = ['0','*', '*', '*', '*', '*'];
 			if(period == 'hour') {
-				items[0] = _selectorMins.getCronValue();
+				items[1] = _selectorMins.getCronValue();
+				items[5] = '?';  // To support Quartz
 			}
 			if(period == 'day' || period == 'week' || period == 'month' || period == 'year') {
-				items[0] = _selectorTimeM.getCronValue();
-				items[1] = _selectorTimeH.getCronValue();
+				items[1] = _selectorTimeM.getCronValue();
+				items[2] = _selectorTimeH.getCronValue();
+				items[5] = '?';  // To support Quartz
 			}
 			if(period == 'month' || period == 'year') {
-				items[2] = _selectorDom.getCronValue();
+				items[3] = _selectorDom.getCronValue();
+				items[5] = '?';  // To support Quartz
 			}
 			if(period == 'year') {
-				items[3] = _selectorMonth.getCronValue();
+				items[4] = _selectorMonth.getCronValue();
+				items[5] = '?';  // To support Quartz
 			}
 			if(period == 'week') {
-				items[4] = _selectorDow.getCronValue();
+				items[3] = '?';  // To support Quartz
+				items[5] = _selectorDow.getCronValue();
 			}
 			return items.join(' ');
-		};
+		};		
 
 		// set cron (string like * * * * *)
 		this.setCron = function(str) {
 			if(!str) return;
 			try {
+				// If quartz expression
+				str = str.split(' ').length == 7 ? str.substr(2, str.length - 4).replace(/\?/g,"*") : str
+				str = str.split(' ').length == 6 ? str.substr(2).replace(/\?/g,"*") : str
+
 				str = str.replace(/\s+/g, ' ').replace(/^ +/, '').replace(/ +$/, ''); // sanitize
 				var mask = str.replace(/\*\//g, '').replace(/[^\* ]/g, '-').replace(/-+/g, '-').replace(/ +/g, '');
 				var items = str.split(' ');
