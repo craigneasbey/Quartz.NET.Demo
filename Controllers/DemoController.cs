@@ -1,11 +1,14 @@
 
 using System;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Quartz.Spi;
+using Quartz.NET.Demo.Jobs;
+using Quartz.NET.Demo.Models;
 
-namespace Quartz.NET.Demo.Demo
+namespace Quartz.NET.Demo.Controllers
 {
     public class DemoController : Controller
     {
@@ -20,14 +23,15 @@ namespace Quartz.NET.Demo.Demo
             _jobFactory = jobFactory;
         }
 
-        public async Task<string> Index(int id) {
+        public async Task<IActionResult> Index(int id) {
             Console.Out.WriteLine("/Demo/Index");
 
             var scheduler = await GetScheduler();
             var jobKey = await ScheduleSimpleTrigger(scheduler);
             await RescheduleSimpleTrigger(scheduler, jobKey);
+            await RescheduleCronTrigger(scheduler, jobKey);
             
-            return "OK";
+            return View();
         }
 
         public async Task<IScheduler> GetScheduler() {
@@ -80,6 +84,35 @@ namespace Quartz.NET.Demo.Demo
             System.Console.WriteLine($"Recheduling {jobDetails.Key} to run at {newTriggerDateTime.ToLocalTime()}");
 
             await scheduler.RescheduleJob(trigger.Key, newTrigger);
+        }
+
+        public async Task RescheduleCronTrigger(IScheduler scheduler, JobKey jobKey) {
+
+            var jobDetails = await scheduler.GetJobDetail(jobKey);
+            var triggers = await scheduler.GetTriggersOfJob(jobDetails.Key);
+
+            // If triggers not found
+            if (triggers.Count == 0) {
+                return;
+            }
+
+            var trigger = triggers.First();
+
+            var expression = new CronExpression("0 26 13 17 10 ?");
+            var nextTriggerDateTime = expression.GetTimeAfter(DateTime.Now);
+            var newTrigger = TriggerBuilder.Create()
+                .WithIdentity("myNewTrigger", "group1")
+                .WithCronSchedule(expression.CronExpressionString)
+                .Build();
+
+            System.Console.WriteLine($"Recheduling {jobDetails.Key} to run at {nextTriggerDateTime?.ToLocalTime()}");
+
+            await scheduler.RescheduleJob(trigger.Key, newTrigger);
+        }
+
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }
